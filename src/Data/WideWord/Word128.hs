@@ -112,13 +112,21 @@ instance Num Word128 where
   fromInteger = fromInteger128
 
 instance Bits Word128 where
+  {-# INLINE (.&.) #-}
   (.&.) = and128
+  {-# INLINE (.|.) #-}
   (.|.) = or128
+  {-# INLINE xor #-}
   xor = xor128
+  {-# INLINE complement #-}
   complement = complement128
+  {-# INLINE shiftL #-}
   shiftL = shiftL128
+  {-# INLINE unsafeShiftL #-}
   unsafeShiftL = shiftL128
+  {-# INLINE shiftR #-}
   shiftR = shiftR128
+  {-# INLINE unsafeShiftR #-}
   unsafeShiftR = shiftR128
   rotateL = rotateL128
   rotateR = rotateR128
