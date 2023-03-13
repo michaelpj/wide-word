@@ -7,8 +7,6 @@
 {-# LANGUAGE UnboxedTuples #-}
 {-# OPTIONS_GHC -funbox-strict-fields #-}
 
-{-# OPTIONS_GHC -ddump-simpl -ddump-to-file -dsuppress-uniques -dsuppress-coercions -dsuppress-type-applications -dsuppress-unfoldings -dsuppress-idinfo -dppr-cols=200 -dumpdir /tmp/dumps #-}
-
 -----------------------------------------------------------------------------
 ---- |
 ---- Module      :  Data.WideWord.Word128
