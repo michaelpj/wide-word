@@ -7,6 +7,8 @@
 {-# LANGUAGE UnboxedTuples #-}
 {-# OPTIONS_GHC -funbox-strict-fields #-}
 
+{-# OPTIONS_GHC -ddump-simpl -ddump-to-file -dsuppress-uniques -dsuppress-coercions -dsuppress-type-applications -dsuppress-unfoldings -dsuppress-idinfo -dppr-cols=200 -dumpdir /tmp/dumps #-}
+
 -----------------------------------------------------------------------------
 ---- |
 ---- Module      :  Data.WideWord.Word128
@@ -46,7 +48,7 @@ import Foreign.Storable (Storable (..))
 
 import GHC.Base (Int (..))
 import GHC.Enum (predError, succError)
-import GHC.Exts ((*#), (+#), Int#, State#, ByteArray#, MutableByteArray#, Addr#)
+import GHC.Exts ((*#), (+#), Int#, State#, ByteArray#, MutableByteArray#, Addr#, inline)
 import GHC.Generics (Generic)
 import GHC.Real ((%), divZeroError)
 import GHC.Word (Word32, Word64, byteSwap64)
@@ -121,14 +123,16 @@ instance Bits Word128 where
   {-# INLINE complement #-}
   complement = complement128
   {-# INLINE shiftL #-}
-  shiftL = shiftL128
+  shiftL = inline shiftL128
   {-# INLINE unsafeShiftL #-}
-  unsafeShiftL = shiftL128
+  unsafeShiftL = inline shiftL128
   {-# INLINE shiftR #-}
-  shiftR = shiftR128
+  shiftR = inline shiftR128
   {-# INLINE unsafeShiftR #-}
-  unsafeShiftR = shiftR128
+  unsafeShiftR = inline shiftR128
+  {-# INLINE rotateL #-}
   rotateL = rotateL128
+  {-# INLINE rotateR #-}
   rotateR = rotateR128
 
   bitSize _ = 128
@@ -311,7 +315,7 @@ signum128 (Word128 a b) =
 
 fromInteger128 :: Integer -> Word128
 fromInteger128 i =
-  Word128 (fromIntegral $ i `shiftR` 64) (fromIntegral i)
+  Word128 (fromIntegral $ inline shiftR i 64) (fromIntegral i)
 
 -- -----------------------------------------------------------------------------
 -- Functions for `Bits` instance.
@@ -332,21 +336,28 @@ xor128 (Word128 a1 a0) (Word128 b1 b0) = Word128 (xor a1 b1) (xor a0 b0)
 complement128 :: Word128 -> Word128
 complement128 (Word128 a1 a0) = Word128 (complement a1) (complement a0)
 
-{-# INLINE shiftL128 #-}
+{-# INLINABLE shiftL128 #-}
 shiftL128 :: Word128 -> Int -> Word128
-shiftL128 w@(Word128 a1 a0) s
-  | s == 0 = w
-  | s < 0 = shiftL128 w (128 - (abs s `mod` 128))
-  | s >= 128 = zeroWord128
-  | s == 64 = Word128 a0 0
-  | s > 64 = Word128 (a0 `shiftL` (s - 64)) 0
-  | otherwise =
-      Word128 s1 s0
-      where
-        s0 = a0 `shiftL` s
-        s1 = a1 `shiftL` s + a0 `shiftR` (64 - s)
+shiftL128 = go
+  where 
+    {-# INLINABLE go #-}
+    go w@(Word128 a1 a0) s
+      | s == 0 = w
+      | s < 0 = go' w (128 - (abs s `mod` 128))
+      | s >= 128 = zeroWord128
+      | s == 64 = Word128 a0 0
+      | s > 64 = Word128 (a0 `shiftL` (s - 64)) 0
+      | otherwise =
+          Word128 s1 s0
+          where
+            s0 = a0 `shiftL` s
+            s1 = a1 `shiftL` s + a0 `shiftR` (64 - s)
+    -- split off a loop-breaker for the recursive case so
+    -- that we can inline the main function
+    {-# NOINLINE go' #-}
+    go' = shiftL128
 
-{-# INLINE shiftR128 #-}
+{-# INLINABLE shiftR128 #-}
 shiftR128 :: Word128 -> Int -> Word128
 shiftR128 w@(Word128 a1 a0) s
   | s < 0 = zeroWord128
