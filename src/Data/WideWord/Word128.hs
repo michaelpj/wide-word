@@ -324,7 +324,7 @@ xor128 (Word128 a1 a0) (Word128 b1 b0) = Word128 (xor a1 b1) (xor a0 b0)
 complement128 :: Word128 -> Word128
 complement128 (Word128 a1 a0) = Word128 (complement a1) (complement a0)
 
-{-# INLINABLE shiftL128 #-}
+{-# INLINE shiftL128 #-}
 shiftL128 :: Word128 -> Int -> Word128
 shiftL128 w@(Word128 a1 a0) s
   | s == 0 = w
@@ -338,7 +338,7 @@ shiftL128 w@(Word128 a1 a0) s
         s0 = a0 `shiftL` s
         s1 = a1 `shiftL` s + a0 `shiftR` (64 - s)
 
-{-# INLINABLE shiftR128 #-}
+{-# INLINE shiftR128 #-}
 shiftR128 :: Word128 -> Int -> Word128
 shiftR128 w@(Word128 a1 a0) s
   | s < 0 = zeroWord128
